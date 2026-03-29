@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Tuple
 
@@ -18,9 +19,15 @@ from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandl
 
 
 def load_bot_token(env_path: str = "bot_token.env") -> str:
+    env_token = os.getenv("BOT_TOKEN", "").strip().strip("\"'")
+    if env_token:
+        return env_token
+
     token_file = Path(env_path)
     if not token_file.exists():
-        raise FileNotFoundError(f"Token file not found: {token_file.resolve()}")
+        raise FileNotFoundError(
+            f"Token file not found: {token_file.resolve()} and BOT_TOKEN is empty"
+        )
 
     for raw_line in token_file.read_text(encoding="utf-8").splitlines():
         line = raw_line.strip()
