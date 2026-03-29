@@ -3,6 +3,7 @@
 This bot replies with:
 - the Telegram ID of the user who wrote to the bot
 - the source ID of a forwarded message (when Telegram provides it)
+- ID for `@username` mentions when Bot API can resolve it
 - a one-click `Copy ID` button when the ID is available
 
 ## Run

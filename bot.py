@@ -14,6 +14,8 @@ from telegram import (
     MessageOriginUser,
     Update,
 )
+from telegram.constants import MessageEntityType
+from telegram.error import BadRequest
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
 
@@ -65,13 +67,63 @@ def build_copy_id_markup(value: str) -> InlineKeyboardMarkup:
     )
 
 
+async def mentioned_target_info(
+    message: Message, context: ContextTypes.DEFAULT_TYPE
+) -> Tuple[str, str | None] | None:
+    text_entities = message.parse_entities(
+        types=[MessageEntityType.TEXT_MENTION, MessageEntityType.MENTION]
+    )
+    caption_entities = message.parse_caption_entities(
+        types=[MessageEntityType.TEXT_MENTION, MessageEntityType.MENTION]
+    )
+
+    merged_entities = {**text_entities, **caption_entities}
+    if not merged_entities:
+        return None
+
+    # text_mention contains a direct user object with ID.
+    for entity, parsed_value in merged_entities.items():
+        if entity.type != MessageEntityType.TEXT_MENTION or entity.user is None:
+            continue
+
+        target_id = str(entity.user.id)
+        display = parsed_value or entity.user.full_name
+        return f"Mentioned user ID ({display}): {target_id}", target_id
+
+    # For plain @username mentions, try to resolve via Bot API get_chat.
+    for entity, parsed_value in merged_entities.items():
+        if entity.type != MessageEntityType.MENTION:
+            continue
+
+        if not parsed_value.startswith("@"):
+            continue
+
+        username = parsed_value
+        try:
+            target_chat = await context.bot.get_chat(username)
+        except BadRequest:
+            return (
+                f"Could not resolve {username} to an ID. "
+                "Telegram Bot API often hides user IDs for @username mentions.",
+                None,
+            )
+
+        target_id = str(target_chat.id)
+        if target_chat.type == "private":
+            return f"Mentioned user ID ({username}): {target_id}", target_id
+        return f"Mentioned chat ID ({username}): {target_id}", target_id
+
+    return None
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     _ = context
     if update.effective_message is None:
         return
     await update.effective_message.reply_text(
         "Hi! Send me any message and I will show your Telegram ID.\n"
-        "If the message is forwarded, I will try to show the source ID too."
+        "If the message is forwarded, I will try to show the source ID too.\n"
+        "If you send @username, I will try to resolve and show that ID."
     )
 
 
@@ -92,9 +144,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if forwarded_id:
             reply_markup = build_copy_id_markup(forwarded_id)
     else:
-        user_id = str(user.id)
-        lines = [f"Your Telegram ID: {user_id}"]
-        reply_markup = build_copy_id_markup(user_id)
+        mentioned_info = await mentioned_target_info(message, context)
+        if mentioned_info is not None:
+            mentioned_text, mentioned_id = mentioned_info
+            lines = [mentioned_text]
+            if mentioned_id:
+                reply_markup = build_copy_id_markup(mentioned_id)
+        else:
+            user_id = str(user.id)
+            lines = [f"Your Telegram ID: {user_id}"]
+            reply_markup = build_copy_id_markup(user_id)
 
     await message.reply_text("\n".join(lines), reply_markup=reply_markup)
 
