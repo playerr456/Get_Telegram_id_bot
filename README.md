@@ -1,4 +1,4 @@
-# TG ID Bot
+# @see_tg_id_bot
 
 This bot replies with:
 - the Telegram ID of the user who wrote to the bot
