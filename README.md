@@ -1,33 +1,33 @@
 # @see_tg_id_bot
 
-This bot replies with:
-- the Telegram ID of the user who wrote to the bot
-- the source ID of a forwarded message (when Telegram provides it)
-- a one-click `Copy ID` button when the ID is available
+Этот бот отправляет в ответ:
+- Telegram ID пользователя, который написал боту
+- исходный ID пересланного сообщения (если Telegram его предоставляет)
+- кнопку `Copy ID` в один клик, если ID доступен
 
-## Run
+## Запуск
 
-1. Install dependencies:
+1. Установите зависимости:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Ensure `bot_token.env` exists in project root:
-- token as a single line:
+2. Убедитесь, что файл `bot_token.env` существует в корне проекта:
+- токен в одной строке:
   - `123456:ABCDEF...`
-- or key/value format:
+- или в формате ключ/значение:
   - `BOT_TOKEN=123456:ABCDEF...`
 
-3. Start the bot:
+3. Запустите бота:
 
 ```bash
 python bot.py
 ```
 
-## Deploy On Linux Server (via PuTTY)
+## Развёртывание на Linux-сервере (через PuTTY)
 
-1. Connect to server with PuTTY (SSH), then run:
+1. Подключитесь к серверу через PuTTY (SSH), затем выполните:
 
 ```bash
 sudo apt update
@@ -40,7 +40,7 @@ pip install -r requirements.txt
 deactivate
 ```
 
-2. Create token file:
+2. Создайте файл с токеном:
 
 ```bash
 cat > bot_token.env << 'EOF'
@@ -49,7 +49,7 @@ EOF
 chmod 600 bot_token.env
 ```
 
-3. Create a systemd service:
+3. Создайте сервис `systemd`:
 
 ```bash
 APP_DIR="$HOME/Get_tg_id_bot"
@@ -73,7 +73,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-4. Start and enable autostart:
+4. Запустите сервис и включите автозапуск:
 
 ```bash
 sudo systemctl daemon-reload
@@ -81,13 +81,13 @@ sudo systemctl enable --now get-tg-id-bot
 sudo systemctl status get-tg-id-bot --no-pager
 ```
 
-5. Logs:
+5. Просмотр логов:
 
 ```bash
 journalctl -u get-tg-id-bot -f
 ```
 
-## Update On Server
+## Обновление на сервере
 
 ```bash
 cd ~/Get_tg_id_bot
